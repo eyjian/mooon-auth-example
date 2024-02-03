@@ -4,7 +4,7 @@
 
 all: mooon_auth_example
 
-mooon_auth_example: mooon_auth.go
+mooon_auth_example: mooon_auth.go internal/logic/authenticate_logic.go
 	go build -o $@ $<
 
 .PHONY: rpc tidy clean fetch

@@ -3,12 +3,19 @@ package logic
 import (
     "context"
     "github.com/zeromicro/go-zero/core/logc"
-    "google.golang.org/grpc/metadata"
-
+    "github.com/zeromicro/go-zero/core/logx"
+    "google.golang.org/grpc/status"
     "mooon-auth-example/internal/svc"
     "mooon-auth-example/pb/mooon_auth"
+    "strconv"
 
-    "github.com/zeromicro/go-zero/core/logx"
+    moooncrypto "github.com/eyjian/gomooon/crypto"
+    mooonutils "github.com/eyjian/gomooon/utils"
+)
+
+const (
+    NoSessionId      = 2024020301 // cookie 中没有会话 ID（鉴权需要）
+    SessionNotExists = 2024020302 // 会话不存在
 )
 
 type AuthenticateLogic struct {
@@ -30,15 +37,15 @@ func init() {
     authDataTable = make(map[string]*authData)
 
     authDataTable = map[string]*authData{
-        "mooon": &authData{
+        "1234567890": &authData{
             role: "super",
             uid:  2024020101,
         },
-        "zhangsan": &authData{
+        "1234567891": &authData{
             role: "admin",
             uid:  2024020102,
         },
-        "wangwu": &authData{
+        "1234567892": &authData{
             role: "ordinary",
             uid:  2024020103,
         },
@@ -56,11 +63,34 @@ func NewAuthenticateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Auth
 func (l *AuthenticateLogic) Authenticate(in *mooon_auth.AuthReq) (*mooon_auth.AuthResp, error) {
     // todo: add your logic here and delete this line
     out := &mooon_auth.AuthResp{}
-    md, ok := metadata.FromIncomingContext(l.ctx)
+
+    httpCookie, ok := in.HttpCookies["sessionid"]
     if !ok {
-        logc.Error(l.ctx, "no any")
-    } else {
-        logc.Info(l.ctx, md)
+        logc.Error(l.ctx, "no sessionid in cookie")
+        return nil, status.Error(NoSessionId, "no sessionid in cookie")
     }
+
+    sessionId := httpCookie.Value
+    authData, ok := authDataTable[sessionId]
+    if !ok {
+        logc.Error(l.ctx, "session not exists")
+        return nil, status.Error(SessionNotExists, "session not exists")
+    }
+
+    out.HttpHeaders = make(map[string]string)
+    out.HttpHeaders["uid"] = strconv.FormatUint(uint64(authData.uid), 10)
+    out.HttpHeaders["role"] = authData.role
+
+    cookie := &mooon_auth.Cookie{
+        Name:  "token",
+        Value: getToken(),
+    }
+    out.HttpCookies = append(out.HttpCookies, cookie)
+
     return out, nil
+}
+
+func getToken() string {
+    nonceStr := mooonutils.GetNonceStr(64)
+    return moooncrypto.Md5Sum(nonceStr, false)
 }
