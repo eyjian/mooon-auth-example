@@ -85,10 +85,15 @@ func (l *AuthenticateLogic) Authenticate(in *mooon_auth.AuthReq) (*mooon_auth.Au
     out.HttpHeaders["role"] = authData.role
 
     token := getToken()
-    out.HttpCookies = append(out.HttpCookies, &mooon_auth.Cookie{
-        Name:  "token",
-        Value: token,
-    })
+    out.HttpCookies = append(out.HttpCookies,
+        &mooon_auth.Cookie{
+            Name:  "token",
+            Value: token,
+        },
+        &mooon_auth.Cookie{
+            Name:  "sessionid",
+            Value: sessionId,
+        })
 
     logc.Infof(l.ctx, "auth ok, token is %s, uid is %d", token, authData.uid)
     return out, nil
