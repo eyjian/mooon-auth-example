@@ -71,6 +71,8 @@ func (l *AuthenticateLogic) Authenticate(in *mooon_auth.AuthReq) (*mooon_auth.Au
     }
 
     sessionId := httpCookie.Value
+    logc.Infof(l.ctx, "sessionid is %s", sessionId)
+
     authData, ok := authDataTable[sessionId]
     if !ok {
         logc.Error(l.ctx, "session not exists")
@@ -82,11 +84,13 @@ func (l *AuthenticateLogic) Authenticate(in *mooon_auth.AuthReq) (*mooon_auth.Au
     out.HttpHeaders["Grpc-Metadata-uid"] = strconv.FormatUint(uint64(authData.uid), 10)
     out.HttpHeaders["role"] = authData.role
 
+    token := getToken()
     out.HttpCookies = append(out.HttpCookies, &mooon_auth.Cookie{
         Name:  "token",
-        Value: getToken(),
+        Value: token,
     })
 
+    logc.Infof(l.ctx, "auth ok, token is %s, uid is %d", token, authData.uid)
     return out, nil
 }
 
