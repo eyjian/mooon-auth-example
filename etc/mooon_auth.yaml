@@ -1,5 +1,15 @@
 Name: mooonauth.rpc
 ListenOn: 0.0.0.0:1999
+
+Log: # Log conf
+  Encoding: plain
+  Level: info
+  Mode: console # file
+  MaxBackups: 10
+  MaxSize: 200
+  Rotation: size
+  Path: log
+
 Etcd:
   Hosts:
   - 127.0.0.1:2379
