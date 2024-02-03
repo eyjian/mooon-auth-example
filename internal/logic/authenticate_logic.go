@@ -78,7 +78,8 @@ func (l *AuthenticateLogic) Authenticate(in *mooon_auth.AuthReq) (*mooon_auth.Au
     }
 
     out.HttpHeaders = make(map[string]string)
-    out.HttpHeaders["uid"] = strconv.FormatUint(uint64(authData.uid), 10)
+    // 在调用端的名必须以“Grpc-Metadata-”打头，而被调端必须以“gateway-”打头，这是 go-zero 的 gateway/internal/headerprocessor.go 写死的规则
+    out.HttpHeaders["Grpc-Metadata-uid"] = strconv.FormatUint(uint64(authData.uid), 10)
     out.HttpHeaders["role"] = authData.role
 
     cookie := &mooon_auth.Cookie{
