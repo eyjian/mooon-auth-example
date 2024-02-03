@@ -82,11 +82,10 @@ func (l *AuthenticateLogic) Authenticate(in *mooon_auth.AuthReq) (*mooon_auth.Au
     out.HttpHeaders["Grpc-Metadata-uid"] = strconv.FormatUint(uint64(authData.uid), 10)
     out.HttpHeaders["role"] = authData.role
 
-    cookie := &mooon_auth.Cookie{
+    out.HttpCookies = append(out.HttpCookies, &mooon_auth.Cookie{
         Name:  "token",
         Value: getToken(),
-    }
-    out.HttpCookies = append(out.HttpCookies, cookie)
+    })
 
     return out, nil
 }
